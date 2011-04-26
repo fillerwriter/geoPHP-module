@@ -1,0 +1,4 @@
+name = geoPHP
+description = Wraps the geoPHP library: advanced geometry operations in PHP
+core = 7.x
+dependencies[] = libraries

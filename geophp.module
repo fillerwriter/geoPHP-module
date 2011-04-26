@@ -1,0 +1,75 @@
+<?php
+
+
+/**
+* Implementation of hook_requirements().
+*/
+function geophp_requirements($phase) {
+  $requirements = array();
+  
+  $geophp = geofield_load_geophp();
+  
+  try {
+    $geophp_version = geoPHP::version();
+  }
+  catch (Exception $e) {
+    $geophp_version = 0;
+  }
+  
+  // Report geoPHP library status
+  if ($geophp) {
+  	if ($geophp_version >= 0.4) {
+      $requirements['geophp'] = array(
+        'title' => t('GeoPHP Library Installed'),
+        'severity' => REQUIREMENT_OK,
+        'value' => t('GeoPHP '.geoPHP::version().' library installed at %path', array('%path' => $geophp)),
+      );
+  	}
+  	else if ($geophp_version >= 0.3) {
+      $requirements['geophp'] = array(
+        'title' => t('Old GeoPHP Library'),
+        'severity' => REQUIREMENT_INFO,
+	      'value' => t('GeoPHP library was found, but you are running an old version. The version you are running is compatible, but it is not current, possibly leading to problems. You can download the newest version from %link and place in your libraries diectory as per the geofield installation instructions.',array('%link' => 'https://github.com/downloads/phayes/geoPHP/geoPHP.tar.gz')),
+      );
+  	}
+  	else {
+	    $requirements['geophp'] = array(
+	      'title' => t('Old GeoPHP Library'),
+	      'severity' => REQUIREMENT_ERROR,
+	      'value' => t('GeoPHP library was found, but you are running an old version. This will lead to problems when working with geofield. Please download from %link and place in your libraries diectory as per the geofield installation instructions.',array('%link' => 'https://github.com/downloads/phayes/geoPHP/geoPHP.tar.gz')),
+	    );
+  	}
+  }
+  else {
+    $requirements['geophp'] = array(
+      'title' => t('GeoPHP Library Not Found'),
+      'severity' => REQUIREMENT_ERROR,
+      'value' => t('GeoPHP library was not found. This will lead to problems when working with geofield. Please download from %link and place in your libraries diectory as per the geofield installation instructions.',array('%link' => 'https://github.com/downloads/phayes/geoPHP/geoPHP.tar.gz')),
+    );
+  }
+  return $requirements;
+}
+
+
+/**
+* Loads the geoPHP library.
+*
+* @return
+*   Returns the filename of the included geoPHP library when successful, FALSE
+*   otherwise.
+*/
+function geophp_load() {
+  static $static_cache = FALSE;
+  
+  if (!$static_cache) {
+    $path = libraries_get_path('geoPHP');
+    $file = $path.'/geoPHP.inc';
+    if (file_exists($file)) {
+      if (include_once($file)) {
+        $static_cache = $file;
+      }
+    }
+  }
+  
+  return $static_cache;
+}
