@@ -23,6 +23,7 @@ function geophp_load() {
       $file = $path . '/geoPHP.inc';
       if (file_exists($file) && $static_cache !== TRUE) {
         include_once($file);
+        $already_found = TRUE;
       }
       $static_cache = $file;
     }
