@@ -9,32 +9,30 @@
 */
 function geophp_load() {
   static $static_cache = FALSE;
+  $already_found = FALSE;
   
   if (!$static_cache) {
+    // Edge case: Another module (likely Geofield) has already loaded the class from somewhere else.
     if (class_exists('geoPHP')) {
       $static_cache = TRUE;
+      $already_found = TRUE;
     }
     
     if (module_exists('libraries')) {
       $path = libraries_get_path('geoPHP');
       $file = $path . '/geoPHP.inc';
       if (file_exists($file) && $static_cache !== TRUE) {
-        if (include_once($file)) {
-          $static_cache = $file;
-        }
+        include_once($file);
       }
-      else {
-        $static_cache = $file;
-      }
+      $static_cache = $file;
     }
     // If other options don't exist, load module's copy of geoPHP.
-    if (!$static_cache) {
+    if (!$already_found) {
       $path = drupal_get_path('module', 'geophp');
       $file = $path . '/geoPHP/geoPHP.inc';
       if (file_exists($file)) {
-        if (include_once($file)) {
-          $static_cache = $file;
-        }
+        include_once($file);
+        $static_cache = $file;
       }
     }
   }
