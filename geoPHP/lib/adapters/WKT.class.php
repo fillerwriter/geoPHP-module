@@ -15,10 +15,28 @@ class WKT extends GeoAdapter
   public function read($wkt) {
     $wkt = trim($wkt);
     
+    // If it contains a ';', then it contains additional SRID data
+    if (strpos($wkt,';')) {
+      $parts = explode(';', $wkt);
+      $wkt = $parts[1];
+      $eparts = explode('=',$parts[0]);
+      $srid = $eparts[1];
+    }
+    else {
+      $srid = NULL;
+    }
+    
     // If geos is installed, then we take a shortcut and let it parse the WKT
     if (geoPHP::geosInstalled()) {
       $reader = new GEOSWKTReader();
-      return geoPHP::geosToGeometry($reader->read($wkt));
+      if ($srid) {
+        $geom = geoPHP::geosToGeometry($reader->read($wkt));
+        $geom->setSRID($srid);
+        return $geom;
+      }
+      else { 
+        return geoPHP::geosToGeometry($reader->read($wkt));
+      }
     }
     $wkt = str_replace(', ', ',', $wkt);
     
@@ -29,7 +47,16 @@ class WKT extends GeoAdapter
       if (strtoupper(substr($wkt, 0, strlen($wkt_geom))) == $wkt_geom) {
         $data_string = $this->getDataString($wkt, $wkt_geom);
         $method = 'parse'.$geom_type;
-        return $this->$method($data_string);
+        
+        if ($srid) {
+          $geom = $this->$method($data_string);
+          $geom->setSRID($srid);
+          return $geom;
+        }
+        else { 
+          return $this->$method($data_string);
+        }
+        
       }
     }
   }
@@ -102,14 +129,11 @@ class WKT extends GeoAdapter
     $data_string = $this->trimParens($data_string);
     $geometries = array();
     $matches = array();
-    $data_pattern = "( |,|[0-9]|\.|-|\)|\()+";
-    $pattern = "/[A-Z]+$data_pattern/";
-    preg_match_all($pattern, $data_string, $matches);
+    $str = preg_replace('/,\s*([A-Za-z])/', '|$1', $data_string);
+    $components = explode('|', trim($str));
     
-    foreach ($matches[0] as $item) {
-      if ($item) {
-        $geometries[] = $this->read(trim($item, ','));
-      }
+    foreach ($components as $component) {
+      $geometries[] = $this->read($component);
     }
     return new GeometryCollection($geometries);
   }
@@ -165,7 +189,7 @@ class WKT extends GeoAdapter
    *
    * @param Geometry $geometry A Geometry object
    *
-   * @return strin
+   * @return string
    */
   public function extractData($geometry) {
     $parts = array();
