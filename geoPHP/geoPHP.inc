@@ -34,7 +34,7 @@ class geoPHP
 {
   
   static function version() {
-    return '0.8';
+    return '0.9';
   }
   
   // geoPHP::load($data, $type, $other_args);
@@ -114,8 +114,7 @@ class geoPHP
     }
     $wkb_writer = new GEOSWKBWriter();
     $wkb = $wkb_writer->writeHEX($geos);
-    $geometry = geoPHP::load($wkb,'wkb',TRUE);
-    //@@TODO: We no longer need to check this once we have Empty geometries
+    $geometry = geoPHP::load($wkb, 'wkb', TRUE);
     if ($geometry) {
       $geometry->setGeos($geos);
       return $geometry;
